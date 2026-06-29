@@ -1,22 +1,32 @@
 from django.contrib import admin
 from .models import *
-from .views import FileDetail
 
 
+@admin.register(File)
 class FileAdmin(admin.ModelAdmin):
-    list_display = ('name','file_type')
-    list_filter = ('file_type',)
-    search_fields = ('name',)
-    list_per_page = 10
-    list_editable = ('name',)
+    list_display = (
+        'id',
+        'name',
+        'user',
+        'size',
+        'created_at',
+    )
 
-admin.site.register(File, FileAdmin)
+    search_fields = (
+        'name',
+        'user__username',
+    )
 
+    list_filter = (
+        'created_at',
+    )
+
+
+@admin.register(Folder)
 class FolderAdmin(admin.ModelAdmin):
-    list_display = ('name','file_type')
-    list_filter = ('file_type',)
-    search_fields = ('name',)
-    list_per_page = 10
-    list_editable = ('name',)
-
-admin.site.register(Folder, FolderAdmin)
+    list_display = (
+        'id',
+        'name',
+        'user',
+        'parent',
+    )

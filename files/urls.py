@@ -1,10 +1,30 @@
 from django.urls import path
 from .views import *
 
+app_name = 'files'
+
 urlpatterns = [
-    path('', FolderListView.as_view(), name='folder_list'),
-    path('<int:pk>/', FolderDetailView.as_view(), name='folder_detail'),
-    path('<int:pk>/delete/', FolderDeleteView.as_view(), name='folder_delete'),
-    path('create/', FolderCreateView.as_view(), name='folder_create'),
-    path('<int:pk>/update/', FolderUpdateView.as_view(), name='folder_update'),
+    path(
+        '',
+        FileListView.as_view(),
+        name='list'
+    ),
+
+    path(
+        'upload/',
+        FileUploadView.as_view(),
+        name='upload'
+    ),
+
+    path(
+        '<int:pk>/download/',
+        FileDownloadView.as_view(),
+        name='download'
+    ),
+
+    path(
+        '<int:pk>/delete/',
+        FileDeleteView.as_view(),
+        name='delete'
+    ),
 ]

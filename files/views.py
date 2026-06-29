@@ -1,60 +1,80 @@
-from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.views.generic import *
-from .models import *
 
-class HomePageView(TemplateView):
-    template_name = 'home.html'
+from .forms import FileUploadForm
+from .models import File
 
-class FolderListView(ListView):
-    model = Folder
-    template_name = 'folder_list.html'
-    context_object_name = 'folder_list'
 
-class FolderDetailView(DetailView):
-    model = Folder
-    template_name = 'folder_detail.html'
-    context_object_name = 'folder'
-
-class FolderCreateView(CreateView):
-    model = Folder
-    template_name = 'folder_create.html'
-    context_object_name = 'folder'
-
-class FolderUpdateView(UpdateView):
-    model = Folder
-    template_name = 'folder_update.html'
-    context_object_name = 'folder'
-
-class FolderDeleteView(DeleteView):
-    model = Folder
-    template_name = 'folder_delete.html'
-    context_object_name = 'folder'
-
-class FileListView(ListView):
+class FileListView(
+    LoginRequiredMixin,
+    ListView
+):
     model = File
-    template_name = 'file_list.html'
-    context_object_name = 'file_list'
+    template_name = 'files/file_list.html'
+    paginate_by = 20
 
-class FileDetailView(DetailView):
+    def get_queryset(self):
+        qs = File.objects.filter(
+            user=self.request.user
+        )
+
+        search = self.request.GET.get('q')
+
+        if search:
+            qs = qs.filter(
+                name__icontains=search
+            )
+
+        return qs
+
+
+class FileUploadView(
+    LoginRequiredMixin,
+    CreateView
+):
     model = File
-    template_name = 'file_detail.html'
-    context_object_name = 'file'
+    form_class = FileUploadForm
+    template_name = 'files/upload.html'
+    success_url = reverse_lazy(
+        'files:list'
+    )
 
-class FileCreateView(CreateView):
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+
+class FileDeleteView(
+    LoginRequiredMixin,
+    DeleteView
+):
     model = File
-    template_name = 'file_create.html'
-    context_object_name = 'file'
+    success_url = reverse_lazy(
+        'files:list'
+    )
 
-class FileUpdateView(UpdateView):
-    model = File
-    template_name = 'file_update.html'
-    context_object_name = 'file'
-
-class FileDeleteView(DeleteView):
-    model = File
-    template_name = 'file_delete.html'
-    context_object_name = 'file'
+    def get_queryset(self):
+        return File.objects.filter(
+            user=self.request.user
+        )
 
 
+class FileDownloadView(
+    LoginRequiredMixin,
+    View
+):
+    def get(self, request, pk):
+        file_obj = get_object_or_404(
+            File,
+            pk=pk,
+            user=request.user
+        )
 
-
+        return FileResponse(
+            file_obj.file.open('rb'),
+            as_attachment=True,
+            filename=file_obj.name
+        )
